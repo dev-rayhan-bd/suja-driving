@@ -1,140 +1,176 @@
-// import React, { useEffect } from "react";
+// import React, { useState, useEffect } from "react";
 // import { useForm } from "react-hook-form";
-// import { useParams } from "react-router-dom";
-// import { useUpdateQuesMutation } from "../../redux/feature/theoryManagement/theoryApi";
+// import { useUpdateQuesMutation } from "../../redux/feature/theoryManagement/theoryApi"; // আপনার এডিট মিউটেশনটি ইমপোর্ট করুন
 // import { message } from "antd";
+// import { FaCloudUploadAlt, FaTimes } from "react-icons/fa";
 
-// const EditQuesForm = ({ refetch, singleData,handleEditCancel }) => {
-//   const { id } = useParams();
-//   const topicId = id;
+// const EditQuesForm = ({ singleData, refetch, handleEditCancel }) => {
+//   const [updateQues] = useUpdateQuesMutation();
+//   const [imagePreview, setImagePreview] = useState(singleData?.question_image || null);
+//   const [newImage, setNewImage] = useState(null);
 
 //   const {
 //     register,
 //     handleSubmit,
 //     formState: { errors },
-//     reset,  // to reset the form values
-//   } = useForm();
+//     reset,
+//     setValue,
+//   } = useForm({
+//     defaultValues: {
+//       question: singleData?.question,
+//       options: singleData?.options,
+//       answer: singleData?.answer,
+//       explanation: singleData?.explanation,
+//     },
+//   });
 
-//   const [updateQues] = useUpdateQuesMutation();
-
-//   // Set the default form values when `singleData` is loaded
+//   // ডাটা চেঞ্জ হলে ফর্ম আপডেট করা
 //   useEffect(() => {
 //     if (singleData) {
 //       reset({
-//         question: singleData.question,
-//         options: singleData.options || ["", "", "", ""], // Ensure options are always an array with 4 items
-//         answer: singleData.answer,
-//         explanation: singleData.explanation,
+//         question: singleData?.question,
+//         options: singleData?.options,
+//         answer: singleData?.answer,
+//         explanation: singleData?.explanation,
 //       });
+//       setImagePreview(singleData?.question_image);
 //     }
 //   }, [singleData, reset]);
 
-//   const onSubmit = async (data) => {
-//     console.log("Form Data:", data);
-//     const modifiedData = {
-//       topic: topicId,
-//       ...data,
-//     };
-
-//     try {
-//       const res = await updateQues({
-//         args: modifiedData,
-//         id: singleData?._id,
-//       }).unwrap();
-//       console.log("response--->", res);
-//       if (res?.success) {
-//         message.success(res?.message);
-//         refetch();
-//         reset();
-//         handleEditCancel()
-//       } else {
-//         message.error(res?.message);
-//       }
-//     } catch (error) {
-//       message.error(error?.data?.message);
+//   const handleImageChange = (e) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       setNewImage(file);
+//       setImagePreview(URL.createObjectURL(file));
 //     }
 //   };
 
-//   const onCancel = () => {
-//     reset();
-//     handleEditCancel()
+//   const removeImage = () => {
+//     setImagePreview(null);
+//     setNewImage(null);
 //   };
 
+//  const onSubmit = async (data) => {
+//   try {
+//     const formData = new FormData();
+
+//     if (newImage) {
+//       formData.append("question_image", newImage);
+//     }
+
+//     const topicId = typeof singleData?.topic === 'object' 
+//                     ? singleData?.topic?._id 
+//                     : singleData?.topic;
+
+//     const updatedData = {
+//       topic: topicId, 
+//       question: data.question,
+//       options: data.options,
+//       answer: data.answer,
+//       explanation: data.explanation,
+//     };
+
+//     formData.append("data", JSON.stringify(updatedData));
+
+//     const res = await updateQues({
+//       id: singleData?._id, 
+//       args: formData,
+//     }).unwrap();
+
+//     if (res?.success) {
+//       message.success(res?.message || "Updated successfully");
+//       refetch();
+//       handleEditCancel();
+//     }
+//   } catch (error) {
+//     message.error(error?.data?.message || "Something went wrong");
+//   }
+// };
+
 //   return (
-//     <form
-//       onSubmit={handleSubmit(onSubmit)}
-//       className="max-w-md mx-auto p-6 space-y-6 font-title"
-//       noValidate
-//     >
-//       <div>
-//         <label className="block mb-1 font-medium text-gray-700">Question</label>
-//         <input
-//           {...register("question", { required: true })}
-//           placeholder="Write Here"
-//           className="w-full border border-gray-300 rounded-md px-3 py-2"
-//         />
-//         {errors.question && (
-//           <p className="text-red-500 text-sm mt-1">Question is required</p>
+//     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-2">
+//       {/* Image Section */}
+//       <div className="space-y-2">
+//         <label className="block text-sm font-medium text-gray-700">Question Image</label>
+//         {!imagePreview ? (
+//           <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400">
+//             <input
+//               type="file"
+//               accept="image/*"
+//               className="absolute inset-0 opacity-0 cursor-pointer"
+//               onChange={handleImageChange}
+//             />
+//             <FaCloudUploadAlt className="text-gray-400 text-3xl mb-1" />
+//             <p className="text-xs text-gray-500 font-medium">Click to upload new image</p>
+//           </div>
+//         ) : (
+//           <div className="relative w-full h-40 rounded-lg overflow-hidden border bg-gray-100">
+//             <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+//             <button
+//               type="button"
+//               onClick={removeImage}
+//               className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full shadow-lg"
+//             >
+//               <FaTimes size={12} />
+//             </button>
+//           </div>
 //         )}
 //       </div>
 
-//       {/* Options for answers */}
+//       {/* Question */}
 //       <div>
-//         <label className="block mb-1 font-medium text-gray-700">Answers</label>
-//         {["options[0]", "options[1]", "options[2]", "options[3]"].map((option, index) => (
-//           <div key={option}>
+//         <label className="block text-sm font-medium text-gray-700">Question</label>
+//         <input
+//           {...register("question", { required: true })}
+//           className="w-full border rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-100"
+//         />
+//       </div>
+
+//       {/* Options Grid */}
+//       <div className="grid grid-cols-2 gap-3">
+//         {[0, 1, 2, 3].map((idx) => (
+//           <div key={idx}>
+//             <label className="text-xs font-semibold text-gray-500 uppercase">Option {idx + 1}</label>
 //             <input
-//               {...register(option, { required: true })}
-//               placeholder={`Option ${index + 1}`}
-//               className="w-full border border-gray-300 rounded-md px-3 py-2 mb-3"
+//               {...register(`options.${idx}`, { required: true })}
+//               className="w-full border rounded-md px-3 py-1.5 mt-1"
 //             />
-//             {errors.options?.[index] && (
-//               <p className="text-red-500 text-sm mt-1">{`Option ${index + 1} is required`}</p>
-//             )}
 //           </div>
 //         ))}
 //       </div>
 
-//       {/* Correct Answer */}
+//       {/* Answer */}
 //       <div>
-//         <label className="block mb-1 font-medium text-gray-700">Correct Answer</label>
+//         <label className="block text-sm font-medium text-gray-700">Correct Answer</label>
 //         <input
 //           {...register("answer", { required: true })}
-//           placeholder="Correct Answer"
-//           className="w-full border border-gray-300 rounded-md px-3 py-2"
+//           className="w-full border rounded-md px-3 py-2 mt-1"
 //         />
-//         {errors.answer && (
-//           <p className="text-red-500 text-sm mt-1">Answer is required</p>
-//         )}
 //       </div>
 
 //       {/* Explanation */}
 //       <div>
-//         <label className="block mb-1 font-medium text-gray-700">Explanation</label>
+//         <label className="block text-sm font-medium text-gray-700">Explanation</label>
 //         <textarea
-//           {...register("explanation", { required: true })}
-//           placeholder="Write Here"
-//           rows={4}
-//           className="w-full border border-gray-300 rounded-md px-3 py-2 resize-none"
+//           {...register("explanation")}
+//           rows={3}
+//           className="w-full border rounded-md px-3 py-2 mt-1 resize-none"
 //         />
-//         {errors.explanation && (
-//           <p className="text-red-500 text-sm mt-1">Explanation is required</p>
-//         )}
 //       </div>
 
-//       <div className="flex gap-12 mt-6">
+//       <div className="flex gap-4 pt-2">
 //         <button
 //           type="button"
-//           onClick={onCancel}
-//           className="w-full px-4 py-2 border border-gray-400 rounded-md hover:bg-gray-100 "
+//           onClick={handleEditCancel}
+//           className="flex-1 py-2 border rounded-md text-gray-600 hover:bg-gray-50"
 //         >
 //           Cancel
 //         </button>
 //         <button
 //           type="submit"
-//           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+//           className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-md transition-all"
 //         >
-//           Update
+//           Update Question
 //         </button>
 //       </div>
 //     </form>
@@ -145,21 +181,28 @@
 
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useUpdateQuesMutation } from "../../redux/feature/theoryManagement/theoryApi"; // আপনার এডিট মিউটেশনটি ইমপোর্ট করুন
+import { useUpdateQuesMutation } from "../../redux/feature/theoryManagement/theoryApi";
+import { useGeneratePresignedUrlMutation } from "../../redux/feature/hazard/hazardApi"; // Presigned URL API
 import { message } from "antd";
-import { FaCloudUploadAlt, FaTimes } from "react-icons/fa";
+import { FaCloudUploadAlt, FaTimes, FaVideo } from "react-icons/fa";
 
 const EditQuesForm = ({ singleData, refetch, handleEditCancel }) => {
   const [updateQues] = useUpdateQuesMutation();
+  const [generatePresignedUrl] = useGeneratePresignedUrlMutation();
+
+  // States for Image & Video
   const [imagePreview, setImagePreview] = useState(singleData?.question_image || null);
   const [newImage, setNewImage] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState(""); // 'generating', 'uploading', 'submitting'
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
+    watch,
   } = useForm({
     defaultValues: {
       question: singleData?.question,
@@ -169,7 +212,8 @@ const EditQuesForm = ({ singleData, refetch, handleEditCancel }) => {
     },
   });
 
-  // ডাটা চেঞ্জ হলে ফর্ম আপডেট করা
+  const watchedVideo = watch("video");
+
   useEffect(() => {
     if (singleData) {
       reset({
@@ -181,6 +225,27 @@ const EditQuesForm = ({ singleData, refetch, handleEditCancel }) => {
       setImagePreview(singleData?.question_image);
     }
   }, [singleData, reset]);
+
+  // XHR Upload Logic for Progress Bar
+  const uploadFileWithProgress = (uploadUrl, file, contentType) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      });
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response);
+        else reject(new Error(`Upload failed: ${xhr.status}`));
+      });
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', contentType);
+      xhr.send(file);
+    });
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -195,79 +260,131 @@ const EditQuesForm = ({ singleData, refetch, handleEditCancel }) => {
     setNewImage(null);
   };
 
- const onSubmit = async (data) => {
-  try {
-    const formData = new FormData();
+  const onSubmit = async (data) => {
+    const videoFile = data?.video?.[0];
+    let finalVideoUrl = singleData?.video_url || ""; // আগের ভিডিওটি ডিফল্ট হিসেবে রাখা হলো
 
-    if (newImage) {
-      formData.append("question_image", newImage);
+    try {
+      setIsUploading(true);
+
+      // --- Step 1: Video Upload (যদি নতুন ভিডিও সিলেক্ট করা হয়) ---
+      if (videoFile) {
+        setUploadStatus("generating");
+        const presignedRes = await generatePresignedUrl({
+          fileType: videoFile.type || "video/mp4",
+          fileCategory: "video"
+        }).unwrap();
+
+        const { uploadURL, fileName } = presignedRes;
+        
+        setUploadStatus("uploading");
+        await uploadFileWithProgress(uploadURL, videoFile, videoFile.type || 'video/mp4');
+        finalVideoUrl = fileName; // নতুন আপলোড করা ফাইলের নাম
+      }
+
+      // --- Step 2: Final Submission ---
+      setUploadStatus("submitting");
+      const formData = new FormData();
+
+      if (newImage) {
+        formData.append("question_image", newImage);
+      }
+
+      const topicId = typeof singleData?.topic === 'object' 
+                      ? singleData?.topic?._id 
+                      : singleData?.topic;
+
+      const updatedData = {
+        topic: topicId, 
+        question: data.question,
+        options: data.options,
+        answer: data.answer,
+        explanation: data.explanation,
+        video: finalVideoUrl, 
+      };
+
+      formData.append("data", JSON.stringify(updatedData));
+
+      const res = await updateQues({
+        id: singleData?._id, 
+        args: formData,
+      }).unwrap();
+
+      if (res?.success) {
+        message.success(res?.message || "Updated successfully");
+        refetch();
+        handleEditCancel();
+      }
+    } catch (error) {
+      console.error(error);
+      message.error(error?.data?.message || error?.message || "Something went wrong");
+    } finally {
+      setIsUploading(false);
+      setUploadStatus("");
+      setUploadProgress(0);
     }
-
-    const topicId = typeof singleData?.topic === 'object' 
-                    ? singleData?.topic?._id 
-                    : singleData?.topic;
-
-    const updatedData = {
-      topic: topicId, 
-      question: data.question,
-      options: data.options,
-      answer: data.answer,
-      explanation: data.explanation,
-    };
-
-    formData.append("data", JSON.stringify(updatedData));
-
-    const res = await updateQues({
-      id: singleData?._id, 
-      args: formData,
-    }).unwrap();
-
-    if (res?.success) {
-      message.success(res?.message || "Updated successfully");
-      refetch();
-      handleEditCancel();
-    }
-  } catch (error) {
-    message.error(error?.data?.message || "Something went wrong");
-  }
-};
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-2">
-      {/* Image Section */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Question Image</label>
-        {!imagePreview ? (
-          <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400">
-            <input
-              type="file"
-              accept="image/*"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              onChange={handleImageChange}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Image Section */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Question Image</label>
+          {!imagePreview ? (
+            <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center h-32 hover:border-blue-400 cursor-pointer">
+              <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageChange} />
+              <FaCloudUploadAlt className="text-gray-400 text-2xl mb-1" />
+              <p className="text-[10px] text-gray-500 uppercase font-bold">New Image</p>
+            </div>
+          ) : (
+            <div className="relative h-32 rounded-lg overflow-hidden border bg-gray-100">
+              <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+              <button type="button" onClick={removeImage} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"><FaTimes size={10} /></button>
+            </div>
+          )}
+        </div>
+
+        {/* Video Section */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Question Video</label>
+          <div className={`relative border-2 border-dashed rounded-lg p-4 h-32 flex flex-col items-center justify-center transition-all ${watchedVideo?.[0] ? 'border-green-400 bg-green-50' : 'border-gray-300 bg-gray-50'}`}>
+            <input 
+              type="file" 
+              accept="video/*" 
+              {...register("video")} 
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+              disabled={isUploading}
             />
-            <FaCloudUploadAlt className="text-gray-400 text-3xl mb-1" />
-            <p className="text-xs text-gray-500 font-medium">Click to upload new image</p>
+            <FaVideo size={24} className={watchedVideo?.[0] ? 'text-green-500' : (singleData?.video_url ? 'text-blue-500' : 'text-gray-400')} />
+            <p className="text-[10px] text-center text-gray-500 mt-2 font-bold uppercase">
+              {watchedVideo?.[0] ? watchedVideo[0].name.substring(0, 15) + "..." : (singleData?.video_url ? "Change Video" : "Upload Video")}
+            </p>
+            {singleData?.video_url && !watchedVideo?.[0] && (
+               <span className="text-[9px] text-blue-600 font-medium">Existing video attached</span>
+            )}
           </div>
-        ) : (
-          <div className="relative w-full h-40 rounded-lg overflow-hidden border bg-gray-100">
-            <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
-            <button
-              type="button"
-              onClick={removeImage}
-              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full shadow-lg"
-            >
-              <FaTimes size={12} />
-            </button>
-          </div>
-        )}
+        </div>
       </div>
+
+      {/* Progress Bar UI */}
+      {isUploading && (
+        <div className="bg-blue-50 p-2 rounded border border-blue-100">
+          <p className="text-[10px] text-blue-600 font-bold mb-1 uppercase tracking-wider">
+            {uploadStatus === "uploading" ? `Uploading: ${uploadProgress}%` : uploadStatus === "submitting" ? "Finalizing..." : "Preparing..."}
+          </p>
+          <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+            <div className="bg-blue-600 h-full transition-all duration-300" style={{ width: `${uploadStatus === "uploading" ? uploadProgress : uploadStatus === "submitting" ? 95 : 10}%` }}></div>
+          </div>
+        </div>
+      )}
 
       {/* Question */}
       <div>
         <label className="block text-sm font-medium text-gray-700">Question</label>
         <input
           {...register("question", { required: true })}
-          className="w-full border rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-100"
+          className="w-full border rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-100 outline-none"
         />
       </div>
 
@@ -275,47 +392,49 @@ const EditQuesForm = ({ singleData, refetch, handleEditCancel }) => {
       <div className="grid grid-cols-2 gap-3">
         {[0, 1, 2, 3].map((idx) => (
           <div key={idx}>
-            <label className="text-xs font-semibold text-gray-500 uppercase">Option {idx + 1}</label>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Option {idx + 1}</label>
             <input
               {...register(`options.${idx}`, { required: true })}
-              className="w-full border rounded-md px-3 py-1.5 mt-1"
+              className="w-full border rounded-md px-3 py-1.5 mt-0.5 outline-none"
             />
           </div>
         ))}
       </div>
 
-      {/* Answer */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Correct Answer</label>
-        <input
-          {...register("answer", { required: true })}
-          className="w-full border rounded-md px-3 py-2 mt-1"
-        />
+      {/* Answer & Explanation */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Correct Answer</label>
+          <input
+            {...register("answer", { required: true })}
+            className="w-full border rounded-md px-3 py-2 mt-1 outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Explanation</label>
+          <textarea
+            {...register("explanation")}
+            rows={1}
+            className="w-full border rounded-md px-3 py-2 mt-1 resize-none outline-none"
+          />
+        </div>
       </div>
 
-      {/* Explanation */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Explanation</label>
-        <textarea
-          {...register("explanation")}
-          rows={3}
-          className="w-full border rounded-md px-3 py-2 mt-1 resize-none"
-        />
-      </div>
-
-      <div className="flex gap-4 pt-2">
+      <div className="flex gap-4 pt-4">
         <button
           type="button"
           onClick={handleEditCancel}
-          className="flex-1 py-2 border rounded-md text-gray-600 hover:bg-gray-50"
+          disabled={isUploading}
+          className="flex-1 py-2.5 border rounded-md text-gray-600 hover:bg-gray-50 transition-all font-medium"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-md transition-all"
+          disabled={isUploading}
+          className={`flex-1 py-2.5 text-white rounded-md shadow-md transition-all font-medium ${isUploading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700 active:scale-95'}`}
         >
-          Update Question
+          {isUploading ? "Please Wait..." : "Update Question"}
         </button>
       </div>
     </form>
